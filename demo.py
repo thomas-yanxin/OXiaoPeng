@@ -11,9 +11,7 @@ import wenxin_api  # 可以通过"pip install wenxin-api"命令安装
 from pcl_pangu.online import Infer
 from wenxin_api.tasks.text_to_image import TextToImage
 
-model = "pangu-alpha-evolution-2B6-pt"
-
-pangu_api_key = '*****************************************'
+pangu_api_key = '***************************************'
 
 
 wechat = ntchat.WeChat()
@@ -84,7 +82,6 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
 
             member.append(data['from_wxid'])
 
-
             room_wxid = '********************'
 
             time.sleep(1)
@@ -96,30 +93,15 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
             wechat_instance.send_room_at_msg(to_wxid=room_wxid, content="{$@},欢迎加入启智社区！", at_list=member)
 
         elif data["msg"].split(' ')[0] == '盘古' :
+            print('pangu')
+            model = "pangu-alpha-evolution-2B6-pt"
 
             prompt_input = data["msg"].split(' ')[1]
             
             result = Infer.generate(model, prompt_input, api_key=pangu_api_key)  # api_key获取请见上文
+            print(result)
 
             wechat_instance.send_text(to_wxid=from_wxid, content=result['results']['generate_text'])
-
-        # elif data["msg"] == '聊天' :
-
-        #     @wechat.msg_register(ntchat.MT_RECV_TEXT_MSG)
-        #     def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
-
-        #         data = message["data"]
-
-        #         model = hub.Module(name='unified_transformer_12L_cn')
-
-        #         with model.interactive_mode(max_turn=5):
-
-        #             while True:
-        #                 human_utterance = data
-        #                 robot_utterance = model.predict(human_utterance)[0]
-        #                 print("[Bot]: %s"%robot_utterance)
-
-        #                 wechat_instance.send_text(to_wxid=from_wxid, content=robot_utterance)
 
 
         elif data["msg"].split(' ')[0] == '文心' :
@@ -253,7 +235,31 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
 
             wechat_instance.send_text(to_wxid=room_wxid, content=result)
 
+        if data['msg'].split('\u2005')[1].split(' ')[0] == '文心' :
+
+            wechat_instance.send_text(to_wxid=room_wxid, content=f"请您稍等，图像正在生成中，大约需要1min~")
+
+            module = hub.Module(name="ernie_vilg")
+
+            style_input = data['msg'].split(' ')[1]
+            text_prompts = data["msg"].split(' ')[2]
+
+            images = module.generate_image(text_prompts=text_prompts, style=style_input,  output_dir='./ernie_vilg_out/')  
+
+            for i in range(5):
+
+                time.sleep(0.5)
+
+                image_path = './ernie_vilg_out/'+ data['msg'].split(' ')[2] + '_{}.png'.format(i)
+
+                wechat_instance.send_image(to_wxid=room_wxid, file_path=image_path)
+
+            time.sleep(5)
+            wechat_instance.send_text(to_wxid=room_wxid, content=f"图像已生成完毕，希望您能喜欢~")
+
         else :
+            print('pangu')
+            model = "pangu-alpha-evolution-2B6-pt"
 
             text = data['msg'].split('\u2005')[1]
 
