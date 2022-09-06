@@ -38,3 +38,7 @@
 ## 特别感谢
 
 1. [ntchat](https://github.com/smallevilbeast/ntchat)
+
+## 扫码体验
+
+![](./wechat.jpg)
