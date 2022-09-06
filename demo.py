@@ -13,7 +13,6 @@ from wenxin_api.tasks.text_to_image import TextToImage
 
 pangu_api_key = '***************************************'
 
-
 wechat = ntchat.WeChat()
 
 # 打开pc微信, smart: 是否管理已经登录的微信
@@ -54,7 +53,7 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
     # 自动同意好友申请
     wechat_instance.accept_friend_request(encryptusername, ticket, int(scene))
 
-    wechat_instance.send_text(to_wxid=from_wxid, content=f"您好~我是OpenI小助手。\n\n您可以回复【加群】加入OpenI官方社区。\n\n回复【盘古+input】可体验鹏城·盘古α大模型生成能力。如：“盘古 中国和美国和日本和法国和加拿大和澳大利亚的首都分别是哪里？”\n\n回复【文心+风格+prompt】可体验ERNIE-ViLG的AIGC图文生成能力（目前支持“水彩”、“油画”、“粉笔画”、“卡通”、“蜡笔画”、“儿童画”、“探索无限”七种风格），如“文心 油画 睡莲”")
+    wechat_instance.send_text(to_wxid=from_wxid, content=f"您好~我是OpenI启智小助手。\n\n您可以回复【加群】加入OpenI官方社区（其实是本产品体验群）。\n\n回复【盘古+input】可体验鹏城·盘古α大模型生成能力。如：“盘古 中国和美国和日本和法国和加拿大和澳大利亚的首都分别是哪里？”\n\n回复【文心+风格+prompt】可体验ERNIE-ViLG的AIGC图文生成能力（目前支持“水彩”、“油画”、“粉笔画”、“卡通”、“蜡笔画”、“儿童画”、“探索无限”七种风格），如“文心 油画 睡莲”")
 
 # 注册消息回调
 @wechat.msg_register(ntchat.MT_RECV_TEXT_MSG)
@@ -92,18 +91,6 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
 
             wechat_instance.send_room_at_msg(to_wxid=room_wxid, content="{$@},欢迎加入启智社区！", at_list=member)
 
-        elif data["msg"].split(' ')[0] == '盘古' :
-            print('pangu')
-            model = "pangu-alpha-evolution-2B6-pt"
-
-            prompt_input = data["msg"].split(' ')[1]
-            
-            result = Infer.generate(model, prompt_input, api_key=pangu_api_key)  # api_key获取请见上文
-            print(result)
-
-            wechat_instance.send_text(to_wxid=from_wxid, content=result['results']['generate_text'])
-
-
         elif data["msg"].split(' ')[0] == '文心' :
 
             wechat_instance.send_text(to_wxid=from_wxid, content=f"请您稍等，图像正在生成中，大约需要1min~")
@@ -118,8 +105,8 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
 
             for i in range(5):
 
-                time.sleep(0.5)
-                image_path = '.\\ernie_vilg_out\\'+ data['msg'].split(' ')[2] + '_{}.png'.format(i)
+                time.sleep(3)
+                image_path = 'E:\\Open_source\\OpenI\\ernie_vilg_out\\'+ data['msg'].split(' ')[2] + '_{}.png'.format(i)
                 wechat_instance.send_image(to_wxid=from_wxid, file_path=image_path)
 
             time.sleep(5)
@@ -128,6 +115,16 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
         elif data["msg"].split(' ')[0] == '使用说明' :
             wechat_instance.send_text(to_wxid=from_wxid, content=f'您好~我是OpenI小助手。\n\n1. 回复【加群】可以加入OpenI官方社区。\n\n2. 回复【盘古+input】可体验鹏城·盘古α大模型生成能力。\n如：“盘古 中国和美国和日本和法国和加拿大和澳大利亚的首都分别是哪里？”\n\n3. 回复【文心+风格+prompt】可体验ERNIE-ViLG的AIGC图文生成能力（目前仅支持“水彩”、“油画”、“粉笔画”、“卡通”、“蜡笔画”、“儿童画”、“探索无限”七种风格）。\n如“文心 油画 睡莲”。\n\n其他隐藏功能可自行探索。')
 
+
+        else :
+
+            model = "pangu-alpha-evolution-2B6-pt"
+
+            prompt_input = data["msg"]
+            
+            result = Infer.generate(model, prompt_input, api_key=pangu_api_key)  # api_key获取请见上文
+
+            wechat_instance.send_text(to_wxid=from_wxid, content=result['results']['generate_text'])
 
 
     elif from_wxid != self_wxid and room_wxid and myself_wxid in data['at_user_list']:
@@ -145,7 +142,7 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
             )
             wechat_instance.send_text(to_wxid=room_wxid, content=result)
         
-        if data['msg'].split('\u2005')[1].split(' ')[0] == '完形填空':
+        elif data['msg'].split('\u2005')[1].split(' ')[0] == '完形填空':
 
             model = hub.Module(name='ernie_zeus')
 
@@ -158,7 +155,7 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
             wechat_instance.send_text(to_wxid=room_wxid, content=result)
 
 
-        if  data['msg'].split('\u2005')[1].split(' ')[0] == '文本摘要':
+        elif  data['msg'].split('\u2005')[1].split(' ')[0] == '文本摘要':
 
             model = hub.Module(name='ernie_zeus')
 
@@ -171,7 +168,7 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
             )
             wechat_instance.send_text(to_wxid=room_wxid, content=result)
 
-        if data['msg'].split('\u2005')[1].split(' ')[0] == '对联续写':
+        elif data['msg'].split('\u2005')[1].split(' ')[0] == '对联续写':
 
             model = hub.Module(name='ernie_zeus')
 
@@ -183,7 +180,7 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
             )
             wechat_instance.send_text(to_wxid=room_wxid, content=result)
 
-        if data['msg'].split('\u2005')[1].split(' ')[0] == '文案创作':
+        elif data['msg'].split('\u2005')[1].split(' ')[0] == '文案创作':
 
             model = hub.Module(name='ernie_zeus')
 
@@ -195,7 +192,7 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
             )
             wechat_instance.send_text(to_wxid=room_wxid, content=result)
 
-        if data['msg'].split('\u2005')[1].split(' ')[0] == '作文创作':
+        elif data['msg'].split('\u2005')[1].split(' ')[0] == '作文创作':
 
 
             model = hub.Module(name='ernie_zeus')
@@ -209,7 +206,7 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
             wechat_instance.send_text(to_wxid=room_wxid, content=result)
 
 
-        if data['msg'].split('\u2005')[1].split(' ')[0] == 'SQL':
+        elif data['msg'].split('\u2005')[1].split(' ')[0] == 'SQL':
 
             model = hub.Module(name='ernie_zeus')
 
@@ -221,7 +218,7 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
             )
             wechat_instance.send_text(to_wxid=room_wxid, content=result)
 
-        if data['msg'].split('\u2005')[1].split(' ')[0] == '情感分析':
+        elif data['msg'].split('\u2005')[1].split(' ')[0] == '情感分析':
 
             model = hub.Module(name='ernie_zeus')
 
@@ -235,7 +232,7 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
 
             wechat_instance.send_text(to_wxid=room_wxid, content=result)
 
-        if data['msg'].split('\u2005')[1].split(' ')[0] == '文心' :
+        elif data['msg'].split('\u2005')[1].split(' ')[0] == '文心' :
 
             wechat_instance.send_text(to_wxid=room_wxid, content=f"请您稍等，图像正在生成中，大约需要1min~")
 
@@ -248,9 +245,9 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
 
             for i in range(5):
 
-                time.sleep(0.5)
+                time.sleep(3)
 
-                image_path = './ernie_vilg_out/'+ data['msg'].split(' ')[2] + '_{}.png'.format(i)
+                image_path = 'E:\\Open_source\\OpenI\\ernie_vilg_out\\'+ data['msg'].split(' ')[2] + '_{}.png'.format(i)
 
                 wechat_instance.send_image(to_wxid=room_wxid, file_path=image_path)
 
@@ -258,15 +255,15 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
             wechat_instance.send_text(to_wxid=room_wxid, content=f"图像已生成完毕，希望您能喜欢~")
 
         else :
-            print('pangu')
+
             model = "pangu-alpha-evolution-2B6-pt"
 
             text = data['msg'].split('\u2005')[1]
 
             result = Infer.generate(model, text, api_key=pangu_api_key)  # api_key获取请见上文
-            print(result)
 
             wechat_instance.send_text(to_wxid=room_wxid, content=result['results']['generate_text'])
+
 
 
 # 以下是为了让程序不结束，如果有用于PyQt等有主循环消息的框架，可以去除下面代码
