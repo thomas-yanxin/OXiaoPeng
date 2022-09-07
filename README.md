@@ -40,5 +40,5 @@
 1. [ntchat](https://github.com/smallevilbeast/ntchat)
 
 ## 扫码体验
-
+目前本项目仍在开发初期，欢迎大家扫码体验，加群沟通。
 ![](./wechat.jpg)
