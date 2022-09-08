@@ -2,7 +2,7 @@
 
 ## 产品期待
 
-辅助微信社群运营，受微信群广告机器人困扰太久了...被逼急了自己写个机器人规避一下。
+辅助微信社群运营。受微信群广告机器人困扰太久了...被逼急了自己写个机器人规避一下。
 
 请**合法合规**使用，本代码及作者不对任何事件后果负责，相关AI生成后的结果均为模型生成，不代表作者观点和看法。
 
@@ -14,7 +14,11 @@
 
 4. 待续。
 
+## 更新日志：
 
+1. 修复加好友后自动回复的bug
+
+2. 生成图后添加拍一拍
 
 
 ## 已经支持
@@ -37,7 +41,9 @@
 
 ## 特别感谢
 
-1. [ntchat](https://github.com/smallevilbeast/ntchat)
+1. [ntchat](https://github.com/smallevilbeast/ntchat)提供微信机器人框架；
+2. [pcl_pangu](https://git.openi.org.cn/PCL-Platform.Intelligence/pcl_pangu)提供SaaS服务；
+3. [ERNIE](https://wenxin.baidu.com/)提供相关图文生成接口等服务。
 
 ## 扫码体验
 目前本项目仍在开发初期，欢迎大家扫码体验，加群沟通。
