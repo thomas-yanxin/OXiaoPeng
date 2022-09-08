@@ -31,7 +31,7 @@
 
 4. - [x] 接入[Pangu](https://git.openi.org.cn/PCL-Platform.Intelligence/pcl_pangu)SaaS完成日常对话；
 
-5. - [x] 接入[ERNIE-VILG](https://wenxin.baidu.com/moduleApi/ernieVilg) 完成图文生成，接入[ERNIE]完成文章续写等；
+5. - [x] 接入[ERNIE-VILG](https://wenxin.baidu.com/moduleApi/ernieVilg) 完成图文生成，接入[ERNIE](https://wenxin.baidu.com/)完成文章续写等；
 
 6. - [ ] 接入[Jina-discoart](https://github.com/jina-ai/discoart)；
 
@@ -46,5 +46,5 @@
 3. [ERNIE](https://wenxin.baidu.com/)提供相关图文生成接口等服务。
 
 ## 扫码体验
-目前本项目仍在开发初期，欢迎大家扫码体验，加群沟通。并且欢迎提PR，有相关产品建议欢迎在[Issue]()评论：
+目前本项目仍在开发初期，欢迎大家扫码体验，加群沟通。并且欢迎提PR，有相关产品建议欢迎在[Issue](https://github.com/thomas-yanxin/Wechat_bot/issues/3)评论：
 ![](./wechat.jpg)
