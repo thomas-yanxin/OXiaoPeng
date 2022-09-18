@@ -8,10 +8,14 @@ import urllib.request
 import httpx
 from pydantic import BaseSettings
 
+import config
+
+wenxin_ak = config.config['wenxin_ak']
+wenxin_sk = config.config['wenxin_sk']
 
 class Config(BaseSettings):
-    wenxin_ak: str = "G26BfAOLpGIRBN5XrOV2eyPA25CE01lE"  # 文心大模型的ak
-    wenxin_sk: str = "txLZOWIjEqXYMU3lSm05ViW4p9DWGOWs"  # 文心大模型的sk
+    wenxin_ak: str = wenxin_ak  # 文心大模型的ak
+    wenxin_sk: str = wenxin_sk  # 文心大模型的sk
     wenxin_cd_time: int = 60  # cd时间，单位秒
     wenxin_image_count: int = 3  # 画画的图片数量
     wenxin_manager_list: list = []  # 文心大模型的管理员列表（不受冷却时间限制）

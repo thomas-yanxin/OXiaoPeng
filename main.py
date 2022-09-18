@@ -1,18 +1,13 @@
 # -*- coding: utf-8 -*-
 import asyncio
-import heapq
-import logging
 import os
 import random
 import sys
 import time
-import urllib.request
 import xml.dom.minidom
 
 import ntchat
 import paddlehub as hub
-import requests
-import wenxin_api  # 可以通过"pip install wenxin-api"命令安装
 from paddlenlp import Taskflow
 from pcl_pangu.online import Infer
 from simhash import Simhash
@@ -21,7 +16,7 @@ from wenxin_api.tasks.text_to_image import TextToImage
 from drawer import image_url
 
 wechat = ntchat.WeChat()
-
+import config
 
 # 打开pc微信, smart: 是否管理已经登录的微信
 wechat.open(smart=True)
@@ -32,20 +27,21 @@ wechat.wait_login()
 rooms = wechat.get_rooms()
 
 myself_wxid = wechat.get_self_info()['wxid']
-
+import heapq
+import sys
 
 sys.path.append(os.path.abspath(os.curdir))
 
 from yuan_api.inspurai import Example, Yuan, set_yuan_account
 
-file_path = 'E:\\Open_source\\OpenI\\ernie_vilg_out\\'
+file_path = config.config['file_path']
 
-# 1. set account
-set_yuan_account("******", "*****")  # 输入您申请的账号和手机号
+yuan_account = config.config['yuan_account']
+yuan_cell_phone_number = config.config['yuan_cell_phone_number']
+master_wxid = config.config['master_wxid']
+room_wxid = config.config['room_wxid']
 
-
-master_wxid = '********************' # 请输入主人的wxid
-
+set_yuan_account(yuan_account, yuan_cell_phone_number)  # 输入您申请的账号和手机号
 
 # 注册消息回调
 @wechat.msg_register(ntchat.MT_RECV_FRIEND_MSG)
@@ -67,7 +63,7 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
 def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
     data = message["data"]
 
-    wechat_instance.send_text(to_wxid=data["wxid"], content=f"您好~我是欧小鹏，一位能画能文的复合型人工智障。\n\n您可以回复【加群】加入内测交流群。\n\n回复【盘古+input】可体验鹏城·盘古α大模型生成能力。如：“盘古 中国和美国和日本和法国和加拿大和澳大利亚的首都分别是哪里？”\n\n回复【文心+风格+prompt】可体验ERNIE-ViLG的AIGC图文生成能力（目前支持“水彩”、“油画”、“粉笔画”、“卡通”、“蜡笔画”、“儿童画”、“探索无限”七种风格），如“文心 油画 睡莲”。更多能力请加群后体验。")
+    wechat_instance.send_text(to_wxid=data["wxid"], content=f"您好~我是欧小鹏，一位能画能文的复合型人工智障。\n\n您可以回复【加群】加入内测交流群暨OpenI启智社区推广群。\n\n回复【盘古+input】可体验鹏城·盘古α大模型生成能力。如：“盘古 中国和美国和日本和法国和加拿大和澳大利亚的首都分别是哪里？”\n\n回复【文心+风格+prompt】可体验ERNIE-ViLG的AIGC图文生成能力（目前支持“水彩”、“油画”、“粉笔画”、“卡通”、“蜡笔画”、“儿童画”、“探索无限”七种风格），如“文心 油画 睡莲”。当然，您也可以和我自由对话。更多能力请加群后体验。")
 
 
 # 注册消息回调
@@ -101,7 +97,6 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
             member = []
             member.append(data['from_wxid'])
 
-            room_wxid = '35045241311@chatroom'
 
             # else:
             wechat_instance.send_text(to_wxid=from_wxid, content=f"启智社区（简称OpenI）是在国家实施新一代人工智能发展战略背景下，新一代人工智能产业技术创新战略联盟（AITISA）组织产学研用协作共建共享的开源平台与社区，以鹏城云脑科学装置及Trustie软件开发群体化方法为基础，全面推动人工智能领域的开源开放与协同创新。社区在“开源开放、尊重创新”的原则下，汇聚学术界、产业界及社会其他各界力量，努力建设成具有国际影响力的人工智能开源开放平台与社区。")
@@ -124,13 +119,13 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
             if style_input not in ['油画', "水彩", "粉笔画", "卡通", "儿童画", "蜡笔画", "探索无限"]: 
                 wechat_instance.send_text(to_wxid=from_wxid, content=f"目前ERNIE-VILG仅支持“油画、水彩、粉笔画、卡通、儿童画、蜡笔画、探索无限”七种风格，您输入的风格不在此列，请检查后重新输入！")
             else:   
-                wechat_instance.send_text(to_wxid=from_wxid, content=f"好哦~ 请您耐心等待~！")
+                wechat_instance.send_text(to_wxid=from_wxid, content=f"好哦~ 正在作画，请您耐心等待~！")
                 # data_image = ernie_vilg(text_prompt, style_input)  
                 # if type(data_image) == 'str':
                 #     wechat_instance.send_text(to_wxid=from_wxid, content=f"对不起，您的输入存在敏感词, 请重新输入")
                 image_list = asyncio.run(image_url(text=text_prompt, style=style_input, file_path=file_path))
                 for image_path in image_list:
-
+                    time.sleep(1)
                     wechat_instance.send_image(to_wxid=from_wxid, file_path=image_path)
 
                 time.sleep(5)
@@ -169,19 +164,25 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
             # wechat_instance.send_text(to_wxid=from_wxid, content=result['results']['generate_text'])
 
         else:
-            model = hub.Module(name='unified_transformer_12L_cn_luge')
-            mm = []
-            text = []
-            mm.append(data["msg"])
-            text.append(mm)
+            yuan = Yuan(engine="dialog",
+            input_prefix="对话：“",
+            input_suffix="”",
+            output_prefix="答：“",
+            output_suffix="”",
+            append_output_prefix_to_query=False)
+
+            # model = hub.Module(name='ernie_zeus')
+            text_prompt = data['msg']
+
+            # 自由问答
             try:
-                result = model.predict(text, use_gpu=True)
-                print(result)
-                wechat_instance.send_text(to_wxid=from_wxid, content=result[0])
-            except:
-                wechat_instance.send_text(to_wxid=from_wxid, content='存在敏感词，请重新输入！')
-
-
+                response = yuan.submit_API(prompt=text_prompt,trun="”")
+                response = response.split('“')[1]
+                
+                wechat_instance.send_text(to_wxid=from_wxid, content= response)
+            except :
+                wechat_instance.send_text(to_wxid=from_wxid, content="存在敏感词，请重新输入！")
+                pass
 
 
     # 群聊
