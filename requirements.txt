@@ -1,9 +1,8 @@
-Flask==1.1.2
-glue==0.13
-httpx==0.23.0
+requests
+hashlib
+json
 jieba==0.42.1
 matplotlib==3.3.2
-nltk==3.4.5
 ntchat==0.1.12
 numpy==1.20.3
 paddlehub==2.3.0
