@@ -7,3 +7,6 @@ config = {
     'wenxin_ak': '',                        # 文心大模型的ak
     'wenxin_sk': '',                        # 文心大模型的sk
 }
+
+
+

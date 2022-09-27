@@ -9,6 +9,7 @@ import httpx
 from pydantic import BaseSettings
 
 import config
+from wechatbot import config
 
 wenxin_ak = config.config['wenxin_ak']
 wenxin_sk = config.config['wenxin_sk']

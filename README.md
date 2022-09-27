@@ -5,24 +5,6 @@
 辅助微信社群运营。受微信群广告机器人困扰太久了...被逼急了自己写个机器人规避一下。
 
 
-### 更新日志：
-- 配置文件模块化，完善repo相关内容；
-
-- 支持基于主人的群转发；
-
-- pangu SaaS服务官方暂时关闭，改用源 1.0；
-
-- 文生图改为异步调用，更符合实际使用环境；
-
-- 文生图能力改为在线调用方式，更加稳定；
-
-- 修复加好友后自动回复的bug；
-
-- 生成图后添加拍一拍；
-
-- 修复敏感词提示的bug；
-
-
 ### 已经支持
 
 1. - [x] 自动添加好友；
@@ -35,7 +17,7 @@
 
 5. - [x] 接入[ERNIE-VILG](https://wenxin.baidu.com/moduleApi/ernieVilg) 完成图文生成，接入[ERNIE]完成文章续写等；
 
-6. - [ ] 接入PaddleNlp/RocketQA/Jina完成平台常规使用问题的自动问答；
+6. - [x] 接入PaddleNlp/RocketQA/Jina完成平台常规使用问题的自动问答；
 
 7. - [x] 群转发
 
@@ -44,12 +26,14 @@
 ### 部署方式
 1. 安装指定[微信PC端](https://git.openi.org.cn/attachments/3bf60134-9d9d-437a-acf4-bfcc50521997?type=0);
 2. 安装相关依赖包: `pip install -r requirements.txt`;
-3. 补充`config.py`内的相关内容，其中：
+3. 补充`./wechatbot/config.py`内的相关内容，其中：
     - [wenxin]相关内容可通过[wenxin_key链接](https://wenxin.baidu.com/moduleApi/key)申请获得；
     - [yuan]相关内容可通过[浪潮 源1.0API申请链接](https://air.inspur.com/apply-api)申请获得；
     - [master_wxid]为宿主(master)的初始微信号；
     - [room_wxid]为主营的微信群号，可观察控制台内容获取；
-3. 运行main.py文件.
+4. 创建索引文件: `python3 ./wechatbot/index.py zh ./wechatbot/qadata.txt ./wechatbot/qadata`
+5. 启动搜索引擎: `python3 ./wechatbot/rocketqa_service.py zh ./wechatbot/qadata.txt ./wechatbot/qadata`
+6. 运行main.py文件.
 
 
 ### 特别感谢

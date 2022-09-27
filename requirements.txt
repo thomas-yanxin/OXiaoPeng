@@ -1,9 +1,17 @@
+<<<<<<< Updated upstream
 requests
 hashlib
 json
 jieba==0.42.1
 matplotlib==3.3.2
 ntchat==0.1.12
+=======
+httpx==0.23.0
+jieba==0.42.1
+matplotlib==3.3.2
+nltk==3.4.5
+ntchat==0.1.13
+>>>>>>> Stashed changes
 numpy==1.20.3
 paddlehub==2.3.0
 paddlenlp==2.0.6
@@ -15,3 +23,6 @@ setuptools==47.1.0
 simhash==2.1.2
 six==1.16.0
 wenxin_api==0.0.4
+tornado
+rocketqa
+faiss-cpu
