@@ -42,7 +42,7 @@
 8. - [ ] 待续…
 
 ### 部署方式
-1. 安装指定[微信PC端](https://git.openi.org.cn/Learning-Develop-Union/Wechat_bot/datasets);
+1. 安装指定[微信PC端](https://git.openi.org.cn/attachments/3bf60134-9d9d-437a-acf4-bfcc50521997?type=0);
 2. 安装相关依赖包: `pip install -r requirements.txt`;
 3. 补充`config.py`内的相关内容，其中：
     - [wenxin]相关内容可通过[wenxin_key链接](https://wenxin.baidu.com/moduleApi/key)申请获得；
