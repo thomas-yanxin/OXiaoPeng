@@ -17,7 +17,7 @@
 
 5. - [x] 接入[ERNIE-VILG](https://wenxin.baidu.com/moduleApi/ernieVilg) 完成图文生成，接入[ERNIE]完成文章续写等；
 
-6. - [x] 接入PaddleNlp/RocketQA/Jina完成平台常规使用问题的自动问答；
+6. - [x] 接入RocketQA完成平台常规使用问题的自动问答；
 
 7. - [x] 群转发
 
