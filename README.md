@@ -13,9 +13,9 @@
 
 3. - [x] 拉入群聊后@指定对象欢迎；
 
-4. - [x] 接入[Pangu](https://git.openi.org.cn/PCL-Platform.Intelligence/pcl_pangu)SaaS完成日常对话；
+4. - [x] 接入[Pangu](https://git.openi.org.cn/PCL-Platform.Intelligence/pcl_pangu)SaaS完成日常对话（因盘古SaaS服务暂停改用源1.0替代）；
 
-5. - [x] 接入[ERNIE-VILG](https://wenxin.baidu.com/moduleApi/ernieVilg) 完成图文生成，接入[ERNIE]完成文章续写等；
+5. - [x] 接入[ERNIE-VILG](https://wenxin.baidu.com/moduleApi/ernieVilg) 完成图文生成；
 
 6. - [x] 接入RocketQA完成平台常规使用问题的自动问答；
 
