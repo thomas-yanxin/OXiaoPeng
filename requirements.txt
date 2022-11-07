@@ -18,3 +18,4 @@ wenxin_api
 tornado
 rocketqa
 faiss-cpu
+pydantic
