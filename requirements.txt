@@ -12,7 +12,7 @@ requests
 scikit_learn
 setuptools
 simhash
-six=
+six
 tqdm
 wenxin_api
 tornado
