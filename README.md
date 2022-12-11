@@ -20,9 +20,11 @@
 
 6. - [x] 接入RocketQA完成平台常规使用问题的自动问答；
 
-7. - [x] 群转发
+7. - [x] 群转发；
 
-8. - [ ] 待续…
+8. - [x] chatgpt；
+
+
 
 ### 部署方式
 1. 安装指定[PC端](https://git.openi.org.cn/attachments/3bf60134-9d9d-437a-acf4-bfcc50521997?type=0);
@@ -36,6 +38,21 @@
 5. 启动搜索引擎: `python3 ./wechatbot/rocketqa_service.py zh ./wechatbot/qadata.txt ./wechatbot/qadata`
 6. 运行main.py文件.
 
+### chatgpt简易版
+
+1. 安装指定[PC端](https://git.openi.org.cn/attachments/3bf60134-9d9d-437a-acf4-bfcc50521997?type=0);
+2.  获取你的 session token:
+>
+> - 打开 [https://chat.openai.com/chat](https://chat.openai.com/chat) 并登录注册，进入网页。
+> - 打开浏览器的 dev tools（按 F12）.
+> - 从顶栏中选择 Application > Cookies.
+>   ![image.png](https://cdn.nlark.com/yuque/0/2022/png/2777249/1670287051371-acd694da-cd3f-46c4-97c4-96438965f8a4.png#averageHue=%232d3136&clientId=uf4023d0a-0da7-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=497&id=u77b3570c&margin=%5Bobject%20Object%5D&name=image.png&originHeight=994&originWidth=1586&originalType=binary&ratio=1&rotation=0&showTitle=false&size=796464&status=done&style=none&taskId=uf4e7e669-4feb-431a-80b7-f7ab47c9113&title=&width=793)
+> - `__Secure-next-auth.session-token`就是你的 session token 啦。
+3. 替换`./chatgpt/config.py`内的token为自己的token值；
+4. `pip install -r requirements-chatgpt.txt`
+5. `python main-chatgpt.py`
+
+附：
 
 ### 特别感谢
 
