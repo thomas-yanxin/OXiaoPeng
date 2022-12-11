@@ -4,7 +4,9 @@
 # import json
 import os
 import uuid
-from url_config import submit_request, reply_request
+
+from url_config import reply_request, submit_request
+
 
 def set_yuan_account(user, phone):
     os.environ['YUAN_ACCOUNT'] = user + '||' + phone
