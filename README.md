@@ -41,7 +41,7 @@
 ### chatgpt简易版
 
 1. 安装指定[PC端](https://git.openi.org.cn/attachments/3bf60134-9d9d-437a-acf4-bfcc50521997?type=0);
-2.  获取你的 session token:
+2.  获取你的 session token(如何注册chatgpt见[此处](https://mirror.xyz/boxchen.eth/9O9CSqyKDj4BKUIil7NC1Sa1LJM-3hsPqaeW_QjfFBc)):
 >
 > - 打开 [https://chat.openai.com/chat](https://chat.openai.com/chat) 并登录注册，进入网页。
 > - 打开浏览器的 dev tools（按 F12）.
