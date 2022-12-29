@@ -4,7 +4,7 @@
 
 辅助社群运营。受群广告机器人困扰太久了...被逼急了自己写个机器人规避一下。
 
-扫码加好友，回复【加群】可体验ChatGPT（已报废）.
+扫码加好友，回复【加群】可体验PanGu Dialog对话模型.
 
 ### 已经支持
 
@@ -14,7 +14,7 @@
 
 3. - [x] 拉入群聊后@指定对象欢迎；
 
-4. - [x] 接入[Pangu](https://git.openi.org.cn/PCL-Platform.Intelligence/pcl_pangu)SaaS完成日常对话（因盘古SaaS服务暂停改用源1.0替代）；
+4. - [x] 接入[Pangu](https://git.openi.org.cn/PCL-Platform.Intelligence/pcl_pangu)MaaS完成日常对话；
 
 5. - [x] 接入[ERNIE-VILG](https://wenxin.baidu.com/moduleApi/ernieVilg) 完成图文生成；
 
