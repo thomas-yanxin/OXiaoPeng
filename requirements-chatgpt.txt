@@ -1,2 +1,2 @@
-revChatGPT==0.0.33.5
+revChatGPT==1.1.5
 ntchat
