@@ -6,6 +6,8 @@ config = {
     'room_wxid':'',                         # 主营的微信群wxid号
     'wenxin_ak': '',                        # 文心大模型的ak
     'wenxin_sk': '',                        # 文心大模型的sk
+    'openai_api_key': "",
+    'clueai_key':"",
 }
 
 

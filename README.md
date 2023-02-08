@@ -43,7 +43,7 @@
 1. 安装指定[PC端](https://git.openi.org.cn/attachments/3bf60134-9d9d-437a-acf4-bfcc50521997?type=0); 
 2. 下载本仓库代码:`git clone https://github.com/thomas-yanxin/OXiaoPeng.git`
 3. 安装相关依赖包: `pip install -r requirements-chatgpt.txt`;
-4. 申请一个key:https://platform.openai.com/account/api-keys
+4. 申请一个key:https://platform.openai.com/account/api-keys, 并替换`main-chatgpt.py`内的`openai_key`的值; 
 5. 运行：`python main-chatgpt.py`
 
 * 测试在python 3.9的环境里可使用

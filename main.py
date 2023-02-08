@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import asyncio
+import datetime
 import heapq
 import json
 import os
@@ -8,21 +9,19 @@ import sys
 import time
 import xml.dom.minidom
 
+import clueai
 import ntchat
-import paddlehub as hub
 import requests
 from pcl_pangu.online import Infer
-from simhash import Simhash
-from wenxin_api.tasks.text_to_image import TextToImage
+from revChatGPT.Official import Chatbot
 
-from wechatbot import common_const
+sys.path.append(os.path.abspath(os.curdir))
+
+from wechatbot import common_const, config
 from wechatbot.drawer import image_url
+from yuan_api.inspurai import Example, Yuan, set_yuan_account
 
 wechat = ntchat.WeChat()
-
-from wechatbot import config
-
-SERVICE_ADD = 'http://localhost:8888/rocketqa'
 # 打开pc微信, smart: 是否管理已经登录的微信
 wechat.open(smart=True)
 
@@ -33,24 +32,89 @@ rooms = wechat.get_rooms()
 
 myself_wxid = wechat.get_self_info()['wxid']
 
-sys.path.append(os.path.abspath(os.curdir))
-
-from yuan_api.inspurai import Example, Yuan, set_yuan_account
+SERVICE_ADD = 'http://localhost:8888/rocketqa'
 
 file_path = config.config['file_path']
-
 yuan_account = config.config['yuan_account']
 yuan_cell_phone_number = config.config['yuan_cell_phone_number']
 master_wxid = config.config['master_wxid']
-room_wxid = config.config['room_wxid']
-
+main_room_wxid = config.config['room_wxid']
+api_key = config.config['OXiaoPeng_key']
+openai_api_key = config.config['openai_api_key']
+data_json_file = config.config['data_json_file']
+clueai_key = config.config['clueai_key']
 set_yuan_account(yuan_account, yuan_cell_phone_number)
+
+
+def yuan_1_0(text_prompt):
+    model_name = 'yuan'
+    # # 自由问答
+    try:
+        yuan = Yuan(engine="dialog",
+                    topK=5,
+                    input_prefix="对话：“",
+                    input_suffix="”",
+                    output_prefix="答：“",
+                    output_suffix="”",
+                    append_output_prefix_to_query=False)
+        text_prompt = text_prompt
+        response = yuan.submit_API(prompt=text_prompt, trun="”")
+        response = response.split('“')[1]
+    except:
+        response = "任务存在问题"
+    return response
+
+
+def ChatGPT(text_prompt):
+    model_name = 'ChatGPT'
+    try:
+        chatbot = Chatbot(api_key=openai_api_key)
+        response = chatbot.ask(
+            text_prompt
+        )  # You can specify custom conversation and parent ids. Otherwise it uses the saved conversation (yes. conversations are automatically saved)
+        print(response["choices"][0]["text"])
+        response = response["choices"][0]["text"]
+    except:
+        response = "任务存在问题"
+    return response
+
+
+def ChatYuan(text_prompt):
+    model_name = 'ChatYuan'
+    try:
+        # initialize the Clueai Client with an API Key
+        cl = clueai.Client(clueai_key, check_api_key=True)
+        prompt = "用户：" + text_prompt + "\n小元："
+        # generate a prediction for a prompt
+        # 需要返回得分的话，指定return_likelihoods="GENERATION"
+        prediction = cl.generate(model_name='ChatYuan-large', prompt=prompt)
+        # print the predicted text
+        print('prediction: {}'.format(prediction.generations[0].text))
+        response = prediction.generations[0].text
+    except:
+        response = "任务存在问题"
+    return response
+
+
+def ChatPanGu(text_prompt):
+
+    model_name = 'chatpangu'
+    model = "chat-pangu"
+    prompt_input = []
+    try:
+        prompt_input.append(text_prompt)
+        result = Infer.generate(model, prompt_input, api_key)
+        response = result['results']['generate_text']
+    except:
+        response = "任务存在问题"
+    return response
 
 
 # 注册消息回调
 @wechat.msg_register(ntchat.MT_RECV_FRIEND_MSG)
 def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
     xml_content = message["data"]["raw_msg"]
+
     dom = xml.dom.minidom.parseString(xml_content)
 
     # 从xml取相关参数
@@ -70,107 +134,42 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
     wechat_instance.send_text(
         to_wxid=data["wxid"],
         content=
-        f"您好~我是欧小鹏，一位能画能文的复合型人工智障。\n\n您可以回复【加群】加入内测交流群暨OpenI启智社区推广群。\n\n回复【盘古+input】可体验鹏城·盘古α大模型生成能力。如：“盘古 中国和美国和日本和法国和加拿大和澳大利亚的首都分别是哪里？”\n\n回复【文心+风格+prompt】可体验ERNIE-ViLG的AIGC图文生成能力（目前支持“古风、油画、水彩画、粉笔画、卡通画、二次元、浮世绘、蒸汽波艺术、像素风格、概念艺术、未来主义、赛博朋克、写实风格、洛丽塔风格、巴洛克风格、超现实主义、探索无限”风格），如“文心 油画 睡莲”。\n\n当然，您也可以和我自由对话。更多能力请加群后体验。\n所有响应均为模型生成结果，不代表项目作者观点！"
+        f"您好~我是欧小鹏，一位能画能文的复合型人工智障。\n目前欧小鹏支持：\n\n1. 【文生图能力】交互方式：文心 风格 描述，（支持“古风、油画、水彩画、粉笔画、卡通画、二次元、浮世绘、蒸汽波艺术、像素风格、概念艺术、未来主义、赛博朋克、写实风格、洛丽塔风格、巴洛克风格、超现实主义”风格），如：“文心 概念艺术 启智社区”；\n\n2. 【平台问答】交互方式：QA 描述，如：“QA 数据集上传”；\n\n3. 【自动问答】\n(1) ChatYuan模型：元语 描述\n(2) 源1.0模型：源 描述\n(3) ChatGPT: chat 描述\n(4) 鹏程·盘古对话模型：直接描述\n\n【注】：群聊内需@欧小鹏才可触发上述功能，且@是真正@，并非复制！更多能力请回复【加群】后体验。若体验存在问题，请加群后反馈。"
     )
 
 
 # 注册消息回调
 @wechat.msg_register(ntchat.MT_RECV_TEXT_MSG)
 def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
+
     data = message["data"]
-
     from_wxid = data["from_wxid"]
-
     self_wxid = wechat_instance.get_login_info()["wxid"]
-
     room_wxid = data["room_wxid"]
 
-    print(data)
-
-    if from_wxid != self_wxid == master_wxid and data["msg"].split(
-            ' ')[0] == '转发':
-        rooms = wechat.get_rooms()
-        for i, room in enumerate(rooms):
-            print(room, self_wxid, room['manager_wxid'])
-            print(room['is_manager'])
-            if room['is_manager'] == '1':
-                room_wxid = room['wxid']
-                result = data["msg"].split(' ')[1]
-                wechat_instance.send_text(to_wxid=room_wxid, content=result)
-
     # 判断消息不是自己发的并且不是群消息时，回复对方
-    elif from_wxid != self_wxid and not room_wxid and data["msg"].split(
-            ' ')[0] == 'QA':
 
-        # 判断是否是QA问答关键字，形式为"QA XXXX"，关键字与所咨询的问题之间以一个空格间隔
-
-        keyword_input = data["msg"].split(' ')[1]
-        wechat_str = ''
-
-        input_data = {}
-        input_data['query'] = keyword_input
-        input_data['topk'] = common_const.TOPK
-
-        # 通过RocketQA，按照匹配度由高到低，获取所咨询问题的相关话题
-        result = requests.post(SERVICE_ADD, json=input_data)
-        res_json = json.loads(result.text)
-
-        if res_json['answer'] is None or len(res_json['answer']) == 0:
-            wechat_instance.send_text(
-                to_wxid=from_wxid, content="未查询到与之匹配的问题，请重新输入咨询内容。")
-
-            return res_json
-
-        i = 0
-        for queryIndex in res_json['answer']:
-
-            # 在每套话题之间加上分割线
-
-            if i > 0:
-                wechat_str = wechat_str + "------------------------\r\n"
-
-            wechat_str = wechat_str + "问题" + str(
-                i + 1) + ": " + queryIndex['title'] + '\n'
-            wechat_str = wechat_str + "回答" + str(
-                i + 1) + ": " + queryIndex['para'] + '\n'
-
-            i = i + 1
-
-        # 将结果回复对方
-        wechat_instance.send_text(to_wxid=from_wxid, content=wechat_str)
-
-    elif from_wxid != self_wxid and not room_wxid:
+    if from_wxid != self_wxid and not room_wxid:
 
         if data["msg"] == '加群':
 
-            room_wxid = config.config['room_wxid']
+            room_wxid = main_room_wxid
             member = []
             member.append(data['from_wxid'])
 
-            # else:
+            sleep_time = random.randint(0, 4)
+            time.sleep(sleep_time)
+            wechat_instance.invite_room_member(room_wxid=room_wxid,
+                                               member_list=member)
+            sleep_time = random.randint(0, 4)
+            time.sleep(sleep_time)
+
+        elif data["msg"].split(' ')[0] == '菜单':
             wechat_instance.send_text(
                 to_wxid=from_wxid,
                 content=
-                f"启智社区（简称OpenI）是在国家实施新一代人工智能发展战略背景下，新一代人工智能产业技术创新战略联盟（AITISA）组织产学研用协作共建共享的开源平台与社区，以鹏城云脑科学装置及Trustie软件开发群体化方法为基础，全面推动人工智能领域的开源开放与协同创新。社区在“开源开放、尊重创新”的原则下，汇聚学术界、产业界及社会其他各界力量，努力建设成具有国际影响力的人工智能开源开放平台与社区。"
+                f'您好~我是欧小鹏，一位能画能文的复合型人工智障。\n目前欧小鹏支持：\n\n1. 【文生图能力】交互方式：文心 风格 描述，（支持“古风、油画、水彩画、粉笔画、卡通画、二次元、浮世绘、蒸汽波艺术、像素风格、概念艺术、未来主义、赛博朋克、写实风格、洛丽塔风格、巴洛克风格、超现实主义”风格），如：“文心 概念艺术 启智社区”；\n\n2. 【平台问答】交互方式：QA 描述，如：“QA 数据集上传”；\n\n3. 【ISSUE创建】交互方式：issue 描述，如：“issue 平台此处存在改进空间”；\n\n4. 【自动问答】\n(1) ChatYuan模型：元语 描述\n(2) 源1.0模型：源 描述\n(3) ChatGPT: chat 描述\n(4) 鹏程·盘古对话模型：直接描述\n\n【注】：群聊内需@欧小鹏才可触发上述功能，且@是真正@，并非复制！更多能力请回复【加群】后体验。若体验存在问题，请加群后反馈。'
             )
-            sleep_time = random.randint(0, 4)
-            time.sleep(sleep_time)
-            wechat_instance.send_text(
-                to_wxid=from_wxid,
-                content=
-                f"入群后，您可以和启智社区的开发者进行交流。若您在使用中有任何问题，您可以在群内提出，提问格式可参考：\n 1. 问题描述:\n2. 相关环境：GPU / NPU\n3. 相关集群：启智/智算\n4. 任务名：\n5. 问题截图or log："
-            )
-            sleep_time = random.randint(0, 4)
-            time.sleep(sleep_time)
-            wechat_instance.add_room_member(
-                room_wxid=room_wxid, member_list=member)
-            sleep_time = random.randint(0, 4)
-            time.sleep(sleep_time)
-            wechat_instance.send_room_at_msg(
-                to_wxid=room_wxid,
-                content=
-                "{$@},欢迎加入欧小鹏内测交流群！详细内容可看群公告~\nGithub地址：https://github.com/thomas-yanxin/Wechat_bot;\nOpenI启智地址：https://git.openi.org.cn/Learning-Develop-Union/Wechat_bot\nPrompt可参考：https://github.com/PaddlePaddle/PaddleHub/blob/develop/modules/image/text_to_image/ernie_vilg/README.md#%E5%9B%9B-prompt-%E6%8C%87%E5%8D%97\n谢谢关注哇~",
-                at_list=member)
 
         elif data["msg"].split(' ')[0] == '文心':
 
@@ -178,237 +177,42 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
             text_prompt = data["msg"].split(' ')[2]
             n = 0
             if style_input not in [
-                    '古风','油画', "水彩画", "粉笔画", "卡通画", '二次元','浮世绘','蒸汽波艺术','像素风格','概念艺术','未来主义','赛博朋克','写实风格','洛丽塔风格','巴洛克风格','超现实主义', "探索无限"
+                    '古风', '油画', "水彩画", "卡通画", '二次元', '浮世绘', '蒸汽波艺术', '像素风格',
+                    '概念艺术', '未来主义', '赛博朋克', '写实风格', '洛丽塔风格', '巴洛克风格', '超现实主义',
+                    "探索无限"
             ]:
                 wechat_instance.send_text(
                     to_wxid=from_wxid,
                     content=
-                    f"目前ERNIE-VILG仅支持“古风、油画、水彩画、粉笔画、卡通画、二次元、浮世绘、蒸汽波艺术、像素风格、概念艺术、未来主义、赛博朋克、写实风格、洛丽塔风格、巴洛克风格、超现实主义、探索无限”风格，您输入的风格不在此列，请检查后重新输入！"
+                    f"目前ERNIE-VILG仅支持“古风、油画、水彩画、卡通画、二次元、浮世绘、蒸汽波艺术、像素风格、概念艺术、未来主义、赛博朋克、写实风格、洛丽塔风格、巴洛克风格、超现实主义、探索无限”风格，您输入的风格不在此列，请检查后重新输入！"
                 )
             else:
-                wechat_instance.send_text(
-                    to_wxid=from_wxid, content=f"好哦~ 正在作画，请您耐心等待~！")
-                # data_image = ernie_vilg(text_prompt, style_input)
-                # if type(data_image) == 'str':
-                #     wechat_instance.send_text(to_wxid=from_wxid, content=f"对不起，您的输入存在敏感词, 请重新输入")
-                image_list = asyncio.run(
-                    image_url(
-                        text=text_prompt,
-                        style=style_input,
-                        file_path=file_path))
-                for image_path in image_list:
-                    time.sleep(1)
-                    wechat_instance.send_image(
-                        to_wxid=from_wxid, file_path=image_path)
-
-                time.sleep(5)
-                wechat_instance.send_text(
-                    to_wxid=from_wxid, content=f"图像已生成完毕，希望您能喜欢~")
-
-
-        elif data["msg"].split(' ')[0] == '盘古':
-            # 自由问答
-            yuan = Yuan(
-                engine="dialog",
-                input_prefix="对话：“",
-                input_suffix="”",
-                output_prefix="答：“",
-                output_suffix="”",
-                append_output_prefix_to_query=False)
-
-            # model = hub.Module(name='ernie_zeus')
-            text_prompt = data["msg"].split(' ')[1]
-            try:
-                response = yuan.submit_API(prompt=text_prompt, trun="”")
-                response = response.split('“')[1]
-                wechat_instance.send_text(to_wxid=from_wxid, content=response)
-
-            except:
-                wechat_instance.send_text(
-                    to_wxid=from_wxid, content='存在敏感词，请重新输入！')
-
-            # model = "pangu-alpha-evolution-2B6-pt"
-
-            # prompt_input = data["msg"].split(' ')[1]
-
-            # result = Infer.generate(model, prompt_input, api_key=pangu_api_key)  # api_key获取请见上文
-
-            # wechat_instance.send_text(to_wxid=from_wxid, content=result['results']['generate_text'])
-
-        else:
-            yuan = Yuan(
-                engine="dialog",
-                input_prefix="对话：“",
-                input_suffix="”",
-                output_prefix="答：“",
-                output_suffix="”",
-                append_output_prefix_to_query=False)
-
-            # model = hub.Module(name='ernie_zeus')
-            text_prompt = data['msg']
-
-            # 自由问答
-            try:
-                response = yuan.submit_API(prompt=text_prompt, trun="”")
-                response = response.split('“')[1]
-
-                wechat_instance.send_text(to_wxid=from_wxid, content=response)
-            except:
-                wechat_instance.send_text(
-                    to_wxid=from_wxid, content="存在敏感词，请重新输入！")
-                pass
-
-    # 群聊
-    elif from_wxid != self_wxid and room_wxid and myself_wxid in data[
-            'at_user_list']:
-
-        member = []
-        member.append(data['from_wxid'])
-
-        if data['msg'].split('\u2005')[1].split(' ')[0] == '小说续写':
-
-            # 加载模型
-            model = hub.Module(name='ernie_zeus')
-            text_prompt = data['msg'].split('\u2005')[1].split(' ')[1]
-
-            # 小说续写
-            result = model.novel_continuation(text=text_prompt)
-            wechat_instance.send_room_at_msg(
-                to_wxid=room_wxid, content="{$@} " + result, at_list=member)
-
-        # elif data['msg'].split('\u2005')[1].split(' ')[0] == '完形填空':
-
-        #     model = hub.Module(name='ernie_zeus')
-
-        #     # 完形填空
-        #     text_prompt = data['msg'].split('\u2005')[1].split(' ')[1]
-        #     result = model.text_cloze(
-        #         text=text_prompt
-        #     )
-        #     wechat_instance.send_room_at_msg(to_wxid=room_wxid, content="{$@} "+result, at_list=member)
-
-        # elif  data['msg'].split('\u2005')[1].split(' ')[0] == '文本摘要':
-
-        #     model = hub.Module(name='ernie_zeus')
-
-        #     # 文本摘要
-        #     text_prompt = data['msg'].split('\u2005')[1].split(' ')[1]
-        #     print(text_prompt)
-        #     result = model.text_summarization(
-        #         text=text_prompt
-        #     )
-        #     wechat_instance.send_room_at_msg(to_wxid=room_wxid, content="{$@} "+result, at_list=member)
-
-        # elif data['msg'].split('\u2005')[1].split(' ')[0] == '对联续写':
-
-        #     model = hub.Module(name='ernie_zeus')
-
-        #     # 对联续写
-        #     text_prompt = data['msg'].split('\u2005')[1].split(' ')[1]
-        #     result = model.couplet_continuation(
-        #         text=text_prompt
-        #     )
-        #     wechat_instance.send_room_at_msg(to_wxid=room_wxid, content="{$@} "+result, at_list=member)
-
-        # elif data['msg'].split('\u2005')[1].split(' ')[0] == '文案创作':
-
-        #     model = hub.Module(name='ernie_zeus')
-
-        #     # 文案创作
-        #     text_prompt = data['msg'].split('\u2005')[1].split(' ')[1]
-        #     result = model.copywriting_generation(
-        #         text=text_prompt
-        #     )
-        #     wechat_instance.send_room_at_msg(to_wxid=room_wxid, content="{$@} "+result, at_list=member)
-
-        # elif data['msg'].split('\u2005')[1].split(' ')[0] == '作文创作':
-
-        #     model = hub.Module(name='ernie_zeus')
-
-        #     # 作文创作
-        #     text_prompt = data['msg'].split('\u2005')[1].split(' ')[1]
-        #     result = model.composition_generation(
-        #         text=text_prompt
-        #     )
-        #     wechat_instance.send_room_at_msg(to_wxid=room_wxid, content="{$@} "+result, at_list=member)
-
-        # elif data['msg'].split('\u2005')[1].split(' ')[0] == 'SQL':
-
-        #     model = hub.Module(name='ernie_zeus')
-
-        #     # 文本描述转 SQL 语句
-        #     text_prompt = data['msg'].split('\u2005')[1].split(' ')[1]
-        #     result = model.custom_generation(
-        #         text=text_prompt
-        #     )
-        #     wechat_instance.send_room_at_msg(to_wxid=room_wxid, content="{$@} "+result, at_list=member)
-
-        # elif data['msg'].split('\u2005')[1].split(' ')[0] == '情感分析':
-
-        #     model = hub.Module(name='ernie_zeus')
-
-        #     # 文本情感分析
-        #     text_prompt = data['msg'].split('\u2005')[1].split(' ')[1]
-        #     result = model.custom_generation(
-        #         text=text_prompt,
-        #         task_prompt='SentimentClassification'
-        #     )
-
-        #     wechat_instance.send_room_at_msg(to_wxid=room_wxid, content="{$@} "+result, at_list=member)
-
-        elif data['msg'].split('\u2005')[1].split(' ')[0] == '文心':
-
-            if data['msg'].split('\u2005')[1].split(' ')[1] not in [
-                    '古风','油画', "水彩画", "粉笔画", "卡通画", '二次元','浮世绘','蒸汽波艺术', '像素风格','概念艺术','未来主义','赛博朋克','写实风格','洛丽塔风格','巴洛克风格','超现实主义', "探索无限"
-            ]:
-
-                wechat_instance.send_room_at_msg(
-                    to_wxid=room_wxid,
-                    content=
-                    "{$@} 目前ERNIE-VILG仅支持“古风、油画、水彩画、粉笔画、卡通画、二次元、浮世绘、蒸汽波艺术、像素风格、概念艺术、未来主义、赛博朋克、写实风格、洛丽塔风格、巴洛克风格、超现实主义、探索无限”风格，您输入的风格不在此列，请检查后重新输入！",
-                    at_list=member)
-            else:
-                wechat_instance.send_room_at_msg(
-                    to_wxid=room_wxid,
-                    content="{$@} 好哦~请您稍等~！",
-                    at_list=member)
-                style_input = data['msg'].split(' ')[1]
-                text_prompt = data["msg"].split(' ')[2]
+                wechat_instance.send_text(to_wxid=from_wxid,
+                                          content=f"好哦~ 正在作画，请您耐心等待~！")
 
                 try:
                     image_list = asyncio.run(
-                        image_url(
-                            text=text_prompt,
-                            style=style_input,
-                            file_path=file_path))
-                    for i, image_path in enumerate(image_list):
+                        image_url(text=text_prompt,
+                                  style=style_input,
+                                  file_path=file_path))
+                    for image_path in image_list:
                         time.sleep(1)
+                        wechat_instance.send_image(to_wxid=from_wxid,
+                                                   file_path=image_path)
 
-                        wechat_instance.send_image(
-                            to_wxid=room_wxid, file_path=image_path)
-                        if i == 2:
-                            break
-
-                    time.sleep(6)
-                    wechat_instance.send_room_at_msg(
-                        to_wxid=room_wxid,
-                        content="{$@}" + "作画: " + '“' + text_prompt + "”" +
-                        "已生成完毕，希望您能喜欢~",
-                        at_list=member)
-                    time.sleep(1)
-                    wechat_instance.send_pat(
-                        room_wxid=room_wxid, patted_wxid=data['from_wxid'])
+                    time.sleep(5)
+                    wechat_instance.send_text(to_wxid=from_wxid,
+                                              content=f"图像已生成完毕，希望您能喜欢~")
                 except:
-                    wechat_instance.send_room_at_msg(
-                        to_wxid=room_wxid,
-                        content="{$@} " + '存在敏感词，请重新输入',
-                        at_list=member)
+                    wechat_instance.send_text(to_wxid=from_wxid,
+                                              content=f"文生图功能暂时关闭")
 
-        elif data['msg'].split('\u2005')[1].split(' ')[0] == 'QA':
+        elif from_wxid != self_wxid and not room_wxid and data["msg"].split(
+                ' ')[0] == 'QA':
 
             # 判断是否是QA问答关键字，形式为"QA XXXX"，关键字与所咨询的问题之间以一个空格间隔
 
-            keyword_input = data['msg'].split('\u2005')[1].split(' ')[1]
+            keyword_input = data["msg"].split(' ')[1]
             wechat_str = ''
 
             input_data = {}
@@ -420,10 +224,9 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
             res_json = json.loads(result.text)
 
             if res_json['answer'] is None or len(res_json['answer']) == 0:
-                wechat_instance.send_room_at_msg(
-                    to_wxid=room_wxid,
-                    content="{$@} " + "未查询到与之匹配的问题，请咨询群内研发人员。",
-                    at_list=member)
+                wechat_instance.send_text(to_wxid=from_wxid,
+                                          content="未查询到与之匹配的问题，请重新输入咨询内容。")
+
                 return res_json
 
             i = 0
@@ -442,90 +245,198 @@ def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
                 i = i + 1
 
             # 将结果回复对方
-            wechat_instance.send_room_at_msg(
-                to_wxid=room_wxid,
-                content="{$@} " + '\n' + wechat_str,
-                at_list=member)
+            wechat_instance.send_text(to_wxid=from_wxid, content=wechat_str)
 
-        elif data['msg'].split('\u2005')[1].split(' ')[0] == '菜单':
-            wechat_str = '目前欧小鹏支持：\n1. 【文生图能力】交互方式：文心 风格 描述，（支持“古风、油画、水彩画、粉笔画、卡通画、二次元、浮世绘、蒸汽波艺术、像素风格、概念艺术、未来主义、赛博朋克、写实风格、洛丽塔风格、巴洛克风格、超现实主义、探索无限”风格），如：“文心 概念艺术 启智社区”；\n2. 【平台问答】交互方式：QA 描述，如：“QA 数据集上传”；\n3. 【自动问答】交互方式：直接描述。\n【注】：群聊内需@欧小鹏才可触发上述功能，且@是真正@，并非复制！'
-            wechat_instance.send_room_at_msg(
-                to_wxid=room_wxid,
-                content="{$@} " + '\n' + wechat_str,
-                at_list=member)
+        elif data['msg'].split(' ')[0] == '源':
+            text_prompt = data['msg'].split(' ')[1]
+            response = yuan_1_0(text_prompt=text_prompt)
 
+            wechat_instance.send_text(to_wxid=from_wxid,
+                                      content='【浪潮源1.0回复】' + response)
 
-        # elif data['msg'].split('\u2005')[1].split(' ')[0] == 'pai':
-        #     wechat_instance.send_room_at_msg(to_wxid=room_wxid, content="{$@} 请您稍等，图像正在生成中，大约需要30s~", at_list=member)
+        elif data['msg'].split(' ')[0] == 'chat':
+            text_prompt = data['msg'].split(' ')[1]
+            response = ChatGPT(text_prompt=text_prompt)
 
-        #     # 默认模型为 pai-painter-painting-base-zh
-        #     text_to_image = Taskflow("text_to_image")
+            wechat_instance.send_text(to_wxid=from_wxid,
+                                      content="【ChatGPT回复】" + response)
 
-        #     text_prompt = data['msg'].split('\u2005')[1].split(' ')[1]
-        #     image_list = text_to_image(text_prompt)
-
-        #     for i in range(2):
-        #         image_path = file_path + data['msg'].split(' ')[1] + '_{}.png'.format(i)
-        #         image_list[0][1].save(image_path)
-        #         wechat_instance.send_image(to_wxid=room_wxid, file_path=image_path)
-
-        #     time.sleep(5)
-        #     wechat_instance.send_room_at_msg(to_wxid=room_wxid, content="{$@} 图像已生成完毕，希望您能喜欢~", at_list=member)
-        #     time.sleep(1)
-        #     wechat_instance.send_pat(room_wxid=room_wxid, patted_wxid=data['from_wxid'])
-
-        # elif data['msg'].split('\u2005')[1].split(' ')[0] == 'pai风景':
-        #     wechat_instance.send_room_at_msg(to_wxid=room_wxid, content="{$@} 请您稍等，图像正在生成中，大约需要30s~", at_list=member)
-
-        #     # 默认模型为 pai-painter-painting-base-zh
-        #     text_to_image = Taskflow("text_to_image", model='pai-painter-scenery-base-zh')
-
-        #     text_prompt = data['msg'].split('\u2005')[1].split(' ')[1]
-        #     image_list = text_to_image(text_prompt)
-
-        #     for i in range(2):
-        #         image_path = file_path + data['msg'].split(' ')[1] + '_{}.png'.format(i)
-        #         image_list[0][1].save(image_path)
-        #         time.sleep(1)
-        #         wechat_instance.send_image(to_wxid=room_wxid, file_path=image_path)
-
-        #     time.sleep(5)
-        #     wechat_instance.send_room_at_msg(to_wxid=room_wxid, content="{$@} 图像已生成完毕，希望您能喜欢~", at_list=member)
-        #     time.sleep(1)
-        #     wechat_instance.send_pat(room_wxid=room_wxid, patted_wxid=data['from_wxid'])
+        elif data['msg'].split(' ')[0] == '元语':
+            text_prompt = data['msg'].split(' ')[1]
+            response = ChatYuan(text_prompt=text_prompt)
+            wechat_instance.send_text(to_wxid=from_wxid,
+                                      content="【ChatYuan回复】" + response)
 
         else:
-            yuan = Yuan(
-                engine="dialog",
-                input_prefix="对话：“",
-                input_suffix="”",
-                output_prefix="答：“",
-                output_suffix="”",
-                append_output_prefix_to_query=False)
 
-            # model = hub.Module(name='ernie_zeus')
-            text_prompt = data['msg'].split('\u2005')[1]
+            text_prompt = data['msg']
+            response = ChatPanGu(text_prompt=text_prompt)
 
-            # 自由问答
-            try:
-                response = yuan.submit_API(prompt=text_prompt, trun="”")
-                response = response.split('“')[1]
+            wechat_instance.send_text(to_wxid=from_wxid,
+                                      content="【鹏程·盘古对话模型回复】" + response)
 
-                wechat_instance.send_room_at_msg(
-                    to_wxid=room_wxid,
-                    content="{$@} " + response,
-                    at_list=member)
-            except:
-                wechat_instance.send_room_at_msg(
-                    to_wxid=room_wxid,
-                    content="{$@} " + '存在敏感词，请重新输入',
-                    at_list=member)
-                pass
-            # model = "pangu-alpha-evolution-2B6-pt"
-            # text = data['msg'].split('\u2005')[1]
-            # result = Infer.generate(model, text, api_key=pangu_api_key)  # api_key获取请见上文
+# 群聊
+    elif from_wxid != self_wxid and room_wxid and myself_wxid in data[
+            'at_user_list']:
 
-            # wechat_instance.send_room_at_msg(to_wxid=room_wxid, content="{$@} "+ result['results']['generate_text'], at_list=member)
+        member = []
+        member.append(data['from_wxid'])
+        room_wxid = data['room_wxid']
+
+        if '\u2005' in data['msg']:
+
+            if data['msg'].split('\u2005')[1].split(' ')[0] == '文心':
+
+                if data['msg'].split('\u2005')[1].split(' ')[1] not in [
+                        '古风', '油画', "水彩画", "卡通画", '二次元', '浮世绘', '蒸汽波艺术',
+                        '像素风格', '概念艺术', '未来主义', '赛博朋克', '写实风格', '洛丽塔风格',
+                        '巴洛克风格', '超现实主义'
+                ]:
+
+                    wechat_instance.send_room_at_msg(
+                        to_wxid=room_wxid,
+                        content=
+                        "{$@} 目前ERNIE-VILG仅支持“古风、油画、水彩画、卡通画、二次元、浮世绘、蒸汽波艺术、像素风格、概念艺术、未来主义、赛博朋克、写实风格、洛丽塔风格、巴洛克风格、超现实主义”风格，您输入的风格不在此列，请检查后重新输入！",
+                        at_list=member)
+                else:
+                    wechat_instance.send_room_at_msg(to_wxid=room_wxid,
+                                                     content="{$@} 好哦~请您稍等~！",
+                                                     at_list=member)
+                    style_input = data['msg'].split(' ')[1]
+                    text_prompt = data["msg"].split(' ')[2]
+
+                    try:
+                        image_list = asyncio.run(
+                            image_url(text=text_prompt,
+                                      style=style_input,
+                                      file_path=file_path))
+                        for i, image_path in enumerate(image_list):
+                            time.sleep(1)
+
+                            wechat_instance.send_image(to_wxid=room_wxid,
+                                                       file_path=image_path)
+                            if i == 2:
+                                break
+                        time.sleep(6)
+                        wechat_instance.send_room_at_msg(
+                            to_wxid=room_wxid,
+                            content="{$@}" + "作画: " + '“' + text_prompt + "”" +
+                            "已生成完毕，希望您能喜欢~",
+                            at_list=member)
+                        time.sleep(1)
+                        wechat_instance.send_pat(room_wxid=room_wxid,
+                                                 patted_wxid=data['from_wxid'])
+                    except:
+                        wechat_instance.send_room_at_msg(to_wxid=room_wxid,
+                                                         content="{$@} " +
+                                                         '文生图功能暂时关闭',
+                                                         at_list=member)
+
+            elif data['msg'].split('\u2005')[1].split(' ')[0] == 'QA':
+
+                # 判断是否是QA问答关键字，形式为"QA XXXX"，关键字与所咨询的问题之间以一个空格间隔
+
+                keyword_input = data['msg'].split('\u2005')[1].split(' ')[1]
+                wechat_str = ''
+                input_data = {}
+                input_data['query'] = keyword_input
+                input_data['topk'] = common_const.TOPK
+
+                # 通过RocketQA，按照匹配度由高到低，获取所咨询问题的相关话题
+                result = requests.post(SERVICE_ADD, json=input_data)
+                res_json = json.loads(result.text)
+
+                if res_json['answer'] is None or len(res_json['answer']) == 0:
+                    wechat_instance.send_room_at_msg(to_wxid=room_wxid,
+                                                     content="{$@} " +
+                                                     "未查询到与之匹配的问题，请咨询群内研发人员。",
+                                                     at_list=member)
+                    return res_json
+
+                i = 0
+                for queryIndex in res_json['answer']:
+                    # 在每套话题之间加上分割线
+                    if i > 0:
+                        wechat_str = wechat_str + "------------------------\r\n"
+
+                    wechat_str = wechat_str + "问题" + str(
+                        i + 1) + ": " + queryIndex['title'] + '\n'
+                    wechat_str = wechat_str + "回答" + str(
+                        i + 1) + ": " + queryIndex['para'] + '\n'
+                    i = i + 1
+
+                # 将结果回复对方
+                wechat_instance.send_room_at_msg(to_wxid=room_wxid,
+                                                 content="{$@} " + '\n' +
+                                                 wechat_str,
+                                                 at_list=member)
+
+            elif '菜单' in data['msg']:
+                wechat_str = '目前欧小鹏支持：\n\n1. 【文生图能力】交互方式：文心 风格 描述，（支持“古风、油画、水彩画、粉笔画、卡通画、二次元、浮世绘、蒸汽波艺术、像素风格、概念艺术、未来主义、赛博朋克、写实风格、洛丽塔风格、巴洛克风格、超现实主义”风格），如：“文心 概念艺术 启智社区”；\n\n2. 【平台问答】交互方式：QA 描述，如：“QA 数据集上传”；\n\n3. 【自动问答】\n(1) ChatYuan模型：元语 描述\n(2) 源1.0模型：源 描述\n(3) ChatGPT: chat 描述\n(4) 鹏程·盘古对话模型：直接描述\n\n【注】：群聊内需@欧小鹏才可触发上述功能，且@是真正@，并非复制！'
+                wechat_instance.send_room_at_msg(to_wxid=room_wxid,
+                                                 content="{$@} " + '\n' +
+                                                 wechat_str,
+                                                 at_list=member)
+
+            elif data['msg'].split('\u2005')[1].split(' ')[0] == '源':
+                text_prompt = data['msg'].split('\u2005')[1].split(' ')[1]
+                response = yuan_1_0(text_prompt=text_prompt)
+                wechat_instance.send_room_at_msg(to_wxid=room_wxid,
+                                                 content="{$@} " + '\n' +
+                                                 "【浪潮源1.0大模型回复】" + response,
+                                                 at_list=member)
+
+            elif data['msg'].split('\u2005')[1].split(' ')[0] == 'chat':
+                text_prompt = data['msg'].split('\u2005')[1].split(' ')[1]
+                response = ChatGPT(text_prompt=text_prompt)
+
+                wechat_instance.send_room_at_msg(to_wxid=room_wxid,
+                                                 content="{$@} " + '\n' +
+                                                 "【ChatGPT回复】" + response,
+                                                 at_list=member)
+
+            elif data['msg'].split('\u2005')[1].split(' ')[0] == '元语':
+
+                text_prompt = data['msg'].split('\u2005')[1].split(' ')[1]
+                response = ChatYuan(text_prompt=text_prompt)
+
+                wechat_instance.send_room_at_msg(to_wxid=room_wxid,
+                                                 content="{$@} " + '\n' +
+                                                 '【ChatYuan模型回复】' + response,
+                                                 at_list=member)
+
+            else:
+                text_prompt = data['msg'].split('\u2005')[1]
+                response = ChatPanGu(text_prompt=text_prompt)
+
+                wechat_instance.send_room_at_msg(to_wxid=room_wxid,
+                                                 content="{$@} " +
+                                                 "【鹏程·盘古对话模型回复】" + response,
+                                                 at_list=member)
+
+
+# 注册监听所有消息回调
+@wechat.msg_register(ntchat.MT_ALL)
+def on_recv_text_msg(wechat_instance: ntchat.WeChat, message):
+    data = message["data"]
+    type_wx = message['type']
+
+    if type_wx == 11098:
+        data = message['data']
+        member_ = data['member_list']
+        member_wxid = data['member_list'][0]['wxid']
+        member = []
+        member.append(member_wxid)
+        room_wxid_ = data['room_wxid']
+        time.sleep(0.5)
+        if room_wxid_ == main_room_wxid:
+            sleep_time = random.randint(0, 4)
+            time.sleep(sleep_time)
+            wechat_instance.send_room_at_msg(
+                to_wxid=room_wxid_,
+                content=
+                "{$@},欢迎加入欧小鹏内测交流群！详细内容可看群公告~\nGithub地址：https://github.com/thomas-yanxin/Wechat_bot\nOpenI启智地址：https://git.openi.org.cn/Learning-Develop-Union/Wechat_bot\nPrompt可参考：https://github.com/PaddlePaddle/PaddleHub/blob/develop/modules/image/text_to_image/ernie_vilg/README.md#%E5%9B%9B-prompt-%E6%8C%87%E5%8D%97\n记得点个star嗷~\n\n（温馨提示：@欧小鹏回复“菜单”可解锁欧小鹏全部能力~）\n\n点击链接即可注册OpenI账号畅想海量免费算力 https://git.openi.org.cn/user/sign_up?sharedUser=thomas-yanxin",
+                at_list=member)
 
 
 # 以下是为了让程序不结束，如果有用于PyQt等有主循环消息的框架，可以去除下面代码
