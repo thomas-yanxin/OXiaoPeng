@@ -53,6 +53,7 @@
 1. [pcl_pangu](https://git.openi.org.cn/PCL-Platform.Intelligence/pcl_pangu)提供SaaS服务; 
 2. [ERNIE](https://wenxin.baidu.com/)提供相关图文生成接口等服务; 
 3. [Yuan-1.0](https://air.inspur.com/home)提供相关问答服务; 
+4. [ChatYuan](https://github.com/clue-ai)提供问答服务.
 
 ### 扫码体验
 
