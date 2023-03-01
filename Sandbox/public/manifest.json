@@ -1,9 +1,0 @@
-{
-  "short_name": "Yuan1.0 Sandbox",
-  "name": "Yuan1.0 Sandbox",
-  "icons": [],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
-}
