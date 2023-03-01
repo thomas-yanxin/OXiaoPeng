@@ -6,7 +6,7 @@ ntchat
 numpy
 paddlehub==2.3.0
 paddlenlp==2.0.6
-pcl_pangu==1.1.4.6
+pcl_pangu
 Pillow==9.2.0
 requests
 scikit_learn
@@ -19,4 +19,3 @@ tornado
 rocketqa
 faiss-cpu
 pydantic
-revChatGPT==0.0.33.5
