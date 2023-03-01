@@ -19,3 +19,4 @@ tornado
 rocketqa
 faiss-cpu
 pydantic
+clueai
